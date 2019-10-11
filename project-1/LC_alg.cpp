@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
 		while(c != EOF) {
 			LLC.lc = 0;
 			int tmp_col = 0;
-			while (c != '\n' || '\0' || EOF) {
+			while ((c != '\n' || '\0' || EOF)) {
 				printf("c = %c\n", c);					//TODO test
 				if (c == 'r') {
 					c = fgetc(inf);					// read next num char, 0~9
@@ -115,13 +115,15 @@ int main(int argc, char** argv) {
 					LLC.lc++;						// lc + 1
 					LLC.add_e(LLC.lc);					// save cur_lc to current process
 					tmp_col++;
-				} else if (c == ' ') {						// if c = ' ', continue 
-//					continue;				
+				} else if (c == ' ') {						// if c = ' ', nothing				
 				} else if (c == 'N') {						// if c = 'N', add '0' to current process
 					LLC.add_e(0);
 					tmp_col++;
-					while (c != ' ' || '\n' ) {
-						c = fgetc(inf);
+					if ((c = fgetc(inf)) == ' ' || '\n' || EOF || '\0') {	// TODO
+						continue;
+					} else {
+//						c = fgetc(inf);						
+//						}
 					}
 				} else if (c == '\n') {
 					break;
