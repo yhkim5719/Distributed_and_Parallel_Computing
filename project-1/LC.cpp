@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
 	}
 	
 	FILE* f = fopen(argv[1], "r");
-	char* outfile = outfileName(argv[1]);
+	FILE* out = fopen("output.txt", "w");
 
 	char c = fgetc(f);
 	if ( c >= '1' && c <= '9' ) {
@@ -22,12 +22,12 @@ int main(int argc, char** argv) {
 		create_lc_map(argv[1]);
 		verify_recv(p_lc);
 		update_send(p_lc);
-		print_map(p_lc);
+		print_map(p_lc, out);
 	} else {
 		fclose(f);
 		create_event_map(argv[1]);
 		update_p_lc(p_lc);
-		print_lc(p_lc);
+		print_lc(p_lc, out);
 	}
 	return 0;
 }

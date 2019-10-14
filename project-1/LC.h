@@ -1,3 +1,5 @@
+#include <string.h>
+
 #define UNDECIDED 0
 #define SENDER 1
 #define RECEIVER 2
@@ -29,14 +31,15 @@ int lc;					// logical time
 int num_p;				// number of processes in LLC, # of rows
 int p_size;				// size of an LLC process, # of columns
 
-char* outfileName(const char* fileName) {
-	char * pch;
-	pch = strstr(fileName, ".txt");
-	strncpy (pch, "_out.txt", 8);
+/*
+ * char* outfileName(const char* fileName) {
+	char* outName;
+	strcpy(outName, fileName);
+	strcat (outName, ".out");
 
-	return pch;
+	return outName;
 }
-
+*/
 event create_e(int type, int label, int lc, bool valid) {	// type : send, recv, internal, null
 	event e;						
 	e.label = label;					// label for send and recv, e.g. "r1" means label = '1'
@@ -401,34 +404,45 @@ void update_p_lc(std::vector<std::vector<event>> &p_lc) {				// update logical t
 	}	
 }
 
-void print_lc(const std::vector<std::vector<event>> &p_lc) {		//TODO test
+void print_lc(const std::vector<std::vector<event>> &p_lc, FILE* fp) {		//TODO test
+//	FILE* fp = fopen(outfile, "w");
+
 	for (int i = 0; i < num_p; i++) {
-		printf("p[%d] : ", i);
+		fprintf(fp, "p[%d] : ", i);
 		for (int j = 0; j < p_size; j++) {
-			printf("%d ", p_lc[i][j].lc);
+			fprintf(fp, "%d ", p_lc[i][j].lc);
 		}
-		printf("\n");
+		fprintf(fp, "\n");
 	}
+	fprintf(fp, "\n");
+	for (int i = 0; i < s_loc.size(); i++) {							// TODO test
+		fprintf(fp, "send%d is at [%d][%d]\n", s_loc[i].label, s_loc[i].row, s_loc[i].col);	
+	}
+	fprintf(fp, "\n");
 	for (int i = 0; i < r_loc.size(); i++) {							// TODO test
-		printf("recv%d is in row[%d]col[%d]\n", r_loc[i].label, r_loc[i].row, r_loc[i].col);	
+		fprintf(fp, "recv%d is at [%d][%d]\n", r_loc[i].label, r_loc[i].row, r_loc[i].col);	
 	}
+	fclose(fp);
 }
 
-void print_map(const std::vector<std::vector<event>> &p_lc) {		//TODO test
+void print_map(const std::vector<std::vector<event>> &p_lc, FILE* fp) {		//TODO test
+//	FILE* fp = fopen(outfile, "w");
+
 	for (int i = 0; i < num_p; i++) {
-		printf("p[%d] : ", i);
+		fprintf(fp, "p[%d] : ", i);
 		for (int j = 0; j < p_size; j++) {
 			if (p_lc[i][j].type == 1) {
-				printf("s%d ", p_lc[i][j].label);
+				fprintf(fp, "  s%d", p_lc[i][j].label);
 			} else if (p_lc[i][j].type == 2) {
-				printf("r%d ", p_lc[i][j].label);
+				fprintf(fp, "  r%d", p_lc[i][j].label);
 			} else if (p_lc[i][j].type == 3) {
-				printf("i ");
+				fprintf(fp, "   i");
 			} else { 
-				printf("0 ");
+				fprintf(fp, " Nil");
 			}
 		}
-		printf("\n");
+		fprintf(fp, "\n");
 	}
+	fclose(fp);
 }
 
