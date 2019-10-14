@@ -29,6 +29,14 @@ int lc;					// logical time
 int num_p;				// number of processes in LLC, # of rows
 int p_size;				// size of an LLC process, # of columns
 
+char* outfileName(const char* fileName) {
+	char * pch;
+	pch = strstr(fileName, ".txt");
+	strncpy (pch, "_out.txt", 8);
+
+	return pch;
+}
+
 event create_e(int type, int label, int lc, bool valid) {	// type : send, recv, internal, null
 	event e;						
 	e.label = label;					// label for send and recv, e.g. "r1" means label = '1'
@@ -145,7 +153,8 @@ void create_lc_map(const char* file) {
 				tmp_e = create_e(0, -1, lc, tmp_valid);			// tmp_event = undecided, no_label(-1), lc, true
 				add_e(tmp_e);						// add event to cur_process
 				tmp_p_size++;
-			} else if (c == ' ') {						// if c = ' ', do nothing				
+			} else if (c == ' ') {						// if c = ' ', do nothing			
+//				continue;	
 			} else if (c == '\n') {						// if c = '\n', break
 				break;
 			} else {
@@ -157,6 +166,7 @@ void create_lc_map(const char* file) {
 			} else {
 				c = fgetc(f);
 			}
+//			c = fgetc(f);
 		}
 		if ( c ==  EOF) {continue;}
 		p_size = std::max(p_size, tmp_p_size);
@@ -203,11 +213,14 @@ void verify_recv(std::vector<std::vector<event>> &p_lc) {
 void update_send(std::vector<std::vector<event>> &p_lc) {
 	int target_lc;
 	bool set;
-	for (int k = 1; k <= r_loc.size(); k++) {		// from recv label 1 to # of recv label, find appropriate logical time in whole process
+//	printf("r_loc[0].label, r, c = %d, %d, %d\n", r_loc[0].label, r_loc[0].row, r_loc[0].col);
+//	printf("r_loc.size() = %d\n", r_loc.size());
+	for (int k = 1; k <= r_loc.size(); k++) {		// from recv label 1 to # of recv label, find appropriate logical time in whole process	
 		set = false;
 		target_lc = p_lc[r_loc[k - 1].row][r_loc[k - 1].col].lc - 1;
 		for (int i = 0; i < num_p; i++) {
 			for (int j = 0; j < p_size; j++) {
+//				if (p_lc[i][j].lc == target_lc /*&& !set*/) {
 				if (p_lc[i][j].lc == target_lc && !set) {
 					set_s_loc(k, i, j);
 					p_lc[i][j].type = SENDER;
@@ -220,6 +233,17 @@ void update_send(std::vector<std::vector<event>> &p_lc) {
 				}
 			}
 		}
+	}
+	
+	if (r_loc.size() == 0) {
+		for (int i = 0; i < num_p; i++) {
+			for (int j = 0; j < p_size; j++) {
+				if (p_lc[i][j].type == 0) {
+					p_lc[i][j].type = INTERNAL;
+				}
+			}
+		}
+		set = true;
 	}
 	if (set == false) {
 		printf("Incorrect Process, not enough send event.\n");
@@ -401,7 +425,7 @@ void print_map(const std::vector<std::vector<event>> &p_lc) {		//TODO test
 			} else if (p_lc[i][j].type == 3) {
 				printf("i ");
 			} else { 
-				printf("Null ");
+				printf("0 ");
 			}
 		}
 		printf("\n");
