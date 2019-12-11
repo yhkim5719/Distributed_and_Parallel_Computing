@@ -8,9 +8,9 @@ int main (int argc, char** argv) {
 	int rank, gsize;
 	int check_init;			// to check if a process is an initiator or not
         
-	MPI_Comm graph1, graph2;
+	MPI_Comm graph1;
 	
-	int init[2] = {0, 3};		// set initiators TODO to change initiators and entities, change this line.
+	int init[4] = {0, 1, 3, 4};		// set initiators TODO to change initiators and entities, change this line.
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &gsize);
@@ -30,16 +30,35 @@ int main (int argc, char** argv) {
 	// TODO to test with other graphs, modify this part
 	// Example 2: on the powerpoint
 	// creating nodes and edges
-        //int index[5] = {1, 5, 7, 10, 12};
-        //int edges[12] = {1, 0, 2, 3, 4, 3, 1, 2, 1, 4, 1, 3};	
+        int index[5] = {1, 5, 7, 10, 12};
+        int edges[12] = {1, 0, 2, 3, 4, 3, 1, 2, 1, 4, 1, 3};	
 	// end creating nodes and edges
-	// Example 3: on the powerpoint
+	// TODO Example 3: on the powerpoint
 	// creating nodes and edges
-	int index[5] = {3, 7, 9, 13, 16};
-	int edges[16] = {1, 3, 4, 0, 2, 3, 4, 1, 3, 0, 1, 2, 4, 0, 1, 3};	
+//	int index[5] = {3, 7, 9, 13, 16};
+//	int edges[16] = {1, 3, 4, 0, 2, 3, 4, 1, 3, 0, 1, 2, 4, 0, 1, 3};	
 	// end creating nodes and edges
-//	int *index, *edges;		// for the ring topology TODO 
-	int *outindex, *outedges;	// to check a graph topology
+	// TODO Example 1: Ring topology // to test with ring topology, modify this part
+/*	int index[gsize];		// for the ring topology 
+//	int edges[2 * gsize];		// for the ring topology
+
+//	index = (int*)malloc(gsize * sizeof(int));
+//	edges = (int*)malloc(2 * gsize * sizeof(int));
+//	if (!index || !edges) {
+//		printf("Unable to allocate %d words for index or edges\n", 3 * gsize);
+//		MPI_Abort(MPI_COMM_WORLD, 1);
+//	}
+	index[0] = 2;
+	for (i = 1; i < gsize; i++) {
+		index[i] = 2 + index[i - 1];
+	}
+	j = 0;
+	for (i = 0; i < gsize; i++) {
+		edges[j++] = (i - 1 + gsize) % gsize;
+		edges[j++] = (i + 1) % gsize;
+	}
+*/
+//	int *outindex, *outedges;	// to check a graph topology
 	
 	if (rank == 0) {	
        		printf("Initiators: ");
@@ -54,26 +73,6 @@ int main (int argc, char** argv) {
 
 	// create a graph
 	if (gsize >= 3) {
-		// TODO to test with ring topology, modify this part
-		// Example 1: a simple ring graph
-		// start creating nodes and edges
-/*
-		index = (int*)malloc(gsize * sizeof(int));
-		edges = (int*)malloc(2 * gsize * sizeof(int));
-		if (!index || !edges) {
-			printf("Unable to allocate %d words for index or edges\n", 3 * gsize);
-			MPI_Abort(MPI_COMM_WORLD, 1);
-		}
-		index[0] = 2;
-		for (i = 0; i < gsize; i++) {
-			index[i] = 2 + index[i - 1];
-		}
-		j = 0;
-		for (i = 0; i < gsize; i++) {
-			edges[j++] = (i - 1 + gsize) % gsize;
-			edges[j++] = (i + 1) % gsize;
-		}
-*/
 		MPI_Graph_create(MPI_COMM_WORLD, gsize, index, edges, 0, &graph1);
 /*		
 		MPI_Comm_dup(graph1, &graph2);
@@ -115,7 +114,6 @@ int main (int argc, char** argv) {
 	// get the # of neighbors ( # of edges, degree )
 	if (rank == 0) {
 		num_neighbor = index[0];
-//		printf("num_neighbor of P0 = %d\n", num_neighbor);
 	} else {
 		num_neighbor = index[rank] - index[rank - 1];
 	}
@@ -126,10 +124,10 @@ int main (int argc, char** argv) {
 	for (i = 0; i < num_neighbor; i++) {
 		if (rank == 0) {
 			edges_recv_reckon[i] = edges[i];
-			printf("%d's edges[%d] = %d\n", rank, i, edges_recv_reckon[i]);	//TODO test
+//			printf("%d's edges[%d] = %d\n", rank, i, edges_recv_reckon[i]);	// test
 		} else {
 			edges_recv_reckon[i] = edges[index[rank - 1] + i];
-			printf("%d's edges[%d] = %d\n", rank, i, edges_recv_reckon[i]);	//TODO test
+//			printf("%d's edges[%d] = %d\n", rank, i, edges_recv_reckon[i]);	// test
 		}
 	}
 	for (i = 0; i < num_neighbor; i++) {
@@ -187,9 +185,9 @@ int main (int argc, char** argv) {
 				printf("\tR: P%d<--tok%d---P%d : msg%d purged\n", rank, Msg, recv_from, Msg);	
 			} else if (Msg == curP) {					// else if ( P == curP )
 				printf("\tR: P%d<--tok%d---P%d\n", rank, Msg, recv_from);
-				for (i = 0; i < num_neighbor; i++) {				//TODO change the edge value to -1 
+				for (i = 0; i < num_neighbor; i++) {				
 					if (edges_recv_tok[i] == recv_from) {
-						recv_tok_count++;					//TODO test
+						recv_tok_count++;			
 						edges_recv_tok[i] = -1;
 					}
 				}
@@ -220,12 +218,12 @@ int main (int argc, char** argv) {
 						edges_recv_tok[i] = edges[index[rank - 1] + i];
 					}
 				}
-				for (i = 0; i < num_neighbor; i++) {				//TODO change the edge value to -1 
+				for (i = 0; i < num_neighbor; i++) {				// recv_tok_count++, then change that edge's value to -1 
 					if (edges_recv_tok[i] == recv_from) {
-						recv_tok_count++;					//TODO test
-//						printf("%d's # of recv_tok = %d, the value = %d\n", rank, recv_tok_count, edges_recv_tok[i]); //TODO test 
+						recv_tok_count++;					
+//						printf("%d's # of recv_tok = %d, the value = %d\n", rank, recv_tok_count, edges_recv_tok[i]); // test 
 						edges_recv_tok[i] = -1;
-//						printf("now the value = %d\n", edges_recv_tok[i]); //TODO test
+//						printf("now the value = %d\n", edges_recv_tok[i]); // test
 					}
 				}
 				parent = recv_from;					// Parent = P
@@ -266,8 +264,6 @@ int main (int argc, char** argv) {
 			printf("I(process %d) lost.\n", rank);
 		}
 	}
-//	free(index);
-//	free(edges);
 	MPI_Comm_free(&graph1);
 //	MPI_Comm_free(&graph2);
 	MPI_Finalize();
